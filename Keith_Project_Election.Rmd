@@ -1,0 +1,181 @@
+```{r}
+#Import 2020 Survey Data
+paste("Import Data")
+
+library(haven)
+RawData <- read_dta("/Users/Keith/Downloads/anes_timeseries_2020_stata_20210324/anes_timeseries_2020_stata_20210324.dta")
+```
+
+```{r}
+#Initial look at the data, warning it takes a long time to run. Large file. 
+paste("Overview of Data")
+head(RawData, 10)
+dim(RawData)
+library(dplyr)
+glimpse(RawData)
+summary(RawData)
+
+#library(DataExplorer)
+#DataExplorer::create_report(RawData)
+
+#library(DataExplorer)
+#plot_missing(RawData) 
+#plot_bar(RawData) 
+#plot_histogram(RawData)
+```
+
+```{r}
+#Selecting columns to keep for analysis and renaming them to make user friendly
+RawData_SC <- RawData %>% 
+  select(
+    sex = V201600,
+    sexual_orientation = V201601,
+    violence_justification = V201602,
+    money_in_stocks = V201606,
+    total_income = V201607,
+    total_household_income = V201617x,
+    has_health_insurance = V201620,
+    positive_covid = V201624,
+    guns_owned = V201628,
+    remarks_sexist = V201639,
+    women_power_over_men = V201640,
+    life_satisfaction = V201651,
+    voter_registered = V202056,
+    party_of_registration = V202064,
+    did_vote = V202066,
+    did_vote_president = V202072,
+    who_for_president = V202073,
+    time_before_decision = V202075,
+    did_vote_house = V202080,
+    who_for_house = V202081,
+    did_vote_senate = V202087,
+    who_for_senate = V202091,
+    summary_voter_turnout = V202109x,
+    summary_presidential_vote = V202110x,
+    how_voted_2020 = V202117,
+    how_usually_vote = V202118,
+    difficulty_voting = V202119,
+    ft_joe_biden = V202143,
+    ft_donald_trump = V202144,
+    ft_kamala_harris = V202156,
+    ft_mike_pence = V202157,
+    ft_fauci = V202158,
+    ft_christian_fund = V202159,
+    ft_feminists = V202160,
+    ft_liberals = V202161,
+    ft_labor_unions = V202162,
+    ft_big_business = V202163,
+    ft_conservatives = V202164,
+    ft_supreme_court = V202165,
+    ft_gay_men_lesbians = V202166,
+    ft_congress = V202167,
+    ft_muslims = V202168,
+    ft_christians = V202169,
+    ft_jews = V202170,
+    ft_police = V202171,
+    ft_trans_people = V202172,
+    ft_scientists = V202173,
+    ft_blm = V202174,
+    ft_journalists = V202175,
+    ft_socialists = V202179,
+    ft_capitalists = V202180,
+    ft_me_too = V202183,
+    ft_rural_americans = V202184,
+    incumbant_job_in_district = V202204,
+    public_officials_dont_care = V202212,
+    votes_counted_fairly = V202219,
+    immigration_levels = V202232,
+    favor_oppose_citizenship = V202242x,
+    government_reduce_income_inequality = V202257,
+    summ_gov_reduce_income_inequality = V202259x,
+    society_equal_opp = V202260,
+    summ_economic_mobility = V202320x,
+    favor_oppose_tax_millionaires = V202325,
+    favor_oppose_vaccine_schools = V202329,
+    climate_change_importance = V202333,
+    favor_oppose_12k_basic_income = V202374,
+    min_wage_keep_lower_raise = V202377
+    
+  )
+```
+
+```{r}
+#Overview of data with selected columns
+head(RawData_SC, 10)
+tail(RawData_SC, 10)
+
+#install.packages("skimr")
+library(skimr)
+skim(RawData_SC)
+
+#Install packages from MSPP file
+#library(dplyr) # manipulate dataframes
+#library(readr) # read/write dataframes
+#library(tidyr) # reshaping dataframes
+#library(stringr) # string manipulation
+#library(forcats) # factor manipulation
+#library(purrr) # iteration (instead of loops)
+#library(ggplot2) # making plots
+
+summarize(RawData_SC)
+```
+
+```{r}
+ggplot(data = RawData_SC) +
+  aes(x = ft_donald_trump, y = ft_mike_pence) +
+  geom_point(size = 0.5, alpha = 0.25) +
+  geom_smooth(method=lm) +
+  coord_cartesian(ylim = c(-10,110)) +
+  labs(
+    title = "Test",
+    subtitle = "Subtest",
+    x = "x_test",
+    y = "y_test",
+    caption = "caption_test",
+  )
+```
+
+```{r}
+ggplot(data = RawData_SC) +
+  aes(x = party_of_registration, y = sex) +
+  geom_col() +
+  labs(
+    title = "Test",
+    subtitle = "Subtest",
+    x = "x_test",
+    y = "y_test",
+    caption = "caption_test",
+  )
+```
+
+```{r}
+#Converting to all numeric and exploring the data
+RawData_SC_Num <- mutate_all(RawData_SC, function(x) as.numeric(as.character(x)))
+library(skimr)
+skim(RawData_SC_Num)
+
+library(DataExplorer)
+DataExplorer::create_report(RawData_SC_Num)
+```
+
+```{r}
+DataCharacters <- RawData_SC_Num
+DataCharacters$who_for_president <- as.character(DataCharacters$who_for_president)
+```
+
+```{r}
+ggplot(data = DataCharacters) +
+  aes(x = who_for_president, y = ft_blm, color = factor(party_of_registration)) +
+  geom_point(size = 0.5, alpha = 0.25) +
+  stat_boxplot(fill = NA) +
+  scale_x_discrete(limits = c(1, 2)) +
+  coord_cartesian(xlim = c(1,2), ylim = c(-10,105)) +
+  labs(
+    title = "Test",
+    subtitle = "Subtest",
+    x = "x_test",
+    y = "y_test",
+    caption = "caption_test",
+  )
+```
+
