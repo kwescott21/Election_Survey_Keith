@@ -121,17 +121,24 @@ summarize(RawData_SC)
 ```
 
 ```{r}
+#install.packages("ggpmisc")
+library(ggpmisc)
+library(ggplot2)
+my.formula <- y ~ x
 ggplot(data = RawData_SC) +
-  aes(x = ft_donald_trump, y = ft_mike_pence) +
+  aes(x = ft_donald_trump, y = ft_journalists, color = factor(sex)) +
   geom_point(size = 0.5, alpha = 0.25) +
-  geom_smooth(method=lm) +
+  geom_smooth(method=lm, se=TRUE, show.legend=TRUE,formula = my.formula) +
+   stat_poly_eq(formula = my.formula, 
+                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                parse = TRUE) + 
   coord_cartesian(ylim = c(-10,110)) +
   labs(
-    title = "Test",
-    subtitle = "Subtest",
-    x = "x_test",
-    y = "y_test",
-    caption = "caption_test",
+    title = "Trump vs Journalists Thermometers",
+    subtitle = "Factored via Sex",
+    x = "Trump",
+    y = "Journalists",
+    caption = "Data via ANES",
   )
 ```
 
@@ -171,11 +178,11 @@ ggplot(data = DataCharacters) +
   scale_x_discrete(limits = c(1, 2)) +
   coord_cartesian(xlim = c(1,2), ylim = c(-10,105)) +
   labs(
-    title = "Test",
-    subtitle = "Subtest",
-    x = "x_test",
-    y = "y_test",
-    caption = "caption_test",
+    title = "Trump vs Biden Voters Feelings on BLM",
+    subtitle = "Factored via Party",
+    x = "Biden vs. Trump",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
   )
 ```
 
