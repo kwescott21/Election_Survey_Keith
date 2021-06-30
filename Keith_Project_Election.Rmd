@@ -143,15 +143,17 @@ ggplot(data = RawData_SC) +
 ```
 
 ```{r}
-ggplot(data = RawData_SC) +
-  aes(x = party_of_registration, y = sex) +
-  geom_col() +
+ggplot(data = RawData_LT_SC) +
+  aes(x =(year_lt), y = ft_lt_liberals, fill=factor(party_indentification) ) +
+  geom_bar(stat = "summary", width=1.75, position=position_dodge()) +
+  theme_minimal() +
+  coord_cartesian(xlim = c(1970,2016), ylim = c(0,75)) +
   labs(
-    title = "Test",
-    subtitle = "Subtest",
-    x = "x_test",
-    y = "y_test",
-    caption = "caption_test",
+    title = "Feeling Thermometer of Liberals by Year",
+    subtitle = "Factored by Party",
+    x = "Year",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
   )
 ```
 
@@ -186,3 +188,34 @@ ggplot(data = DataCharacters) +
   )
 ```
 
+```{r}
+library(haven)
+RawData_LongTerm <- read_dta("/Users/Keith/Downloads/anes_timeseries_cdf_dta/anes_timeseries_cdf.dta")
+```
+
+```{r}
+#Selecting columns to keep for analysis and renaming them to make user friendly for long term data
+RawData_LT_SC <- RawData_LongTerm %>% 
+  select(
+    year_lt = VCF0004,
+    gender_lt = VCF0070b,
+    income_group_lt = VCF0114,
+    party_indentification = VCF0303,
+    ft_lt_christian_fund = VCF0234,
+    ft_lt_feminists = VCF0253,
+    ft_lt_liberals = VCF0211,
+    ft_lt_labor_unions = VCF0210,
+    ft_lt_big_business = VCF0209,
+    ft_lt_conservatives = VCF0212,
+    ft_lt_congress = VCF0228,
+    ft_lt_jews = VCF0205,
+    ft_lt_police = VCF0214
+    
+  )
+```
+
+```{r}
+head(RawData_LT_SC, 10)
+skim(RawData_LT_SC)
+DataExplorer::create_report(RawData_LT_SC)
+```
