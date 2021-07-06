@@ -1,27 +1,29 @@
 ```{r}
-#Import 2020 Survey Data
-paste("Import Data")
+#Download data from this link:
+#https://drive.google.com/drive/folders/1Fkkyi6w9h0ZDo1vcuOaAVi-I-l2QXOYg?usp=sharing
+#Change paths on file. Data is too large to upload to GitHub
 
+#Import 2020 Survey Data
 library(haven)
 RawData <- read_dta("/Users/Keith/Downloads/anes_timeseries_2020_stata_20210324/anes_timeseries_2020_stata_20210324.dta")
+
+#Import Long-Term Data
+library(haven)
+RawData_LongTerm <- read_dta("/Users/Keith/Downloads/anes_timeseries_cdf_dta/anes_timeseries_cdf.dta")
 ```
 
 ```{r}
-#Initial look at the data, warning it takes a long time to run. Large file. 
-paste("Overview of Data")
-head(RawData, 10)
-dim(RawData)
-library(dplyr)
-glimpse(RawData)
-summary(RawData)
+#Install packages, only run if first time using file
+install.packages("skimr")
+install.packages("dplyr") # manipulate dataframes
+install.packages("readr") # read/write dataframes
+install.packages("tidyr") # reshaping dataframes
+install.packages("stringr") # string manipulation
+install.packages("forcats") # factor manipulation
+install.packages("purrr") # iteration (instead of loops)
+install.packages("ggplot2") # making plots
+install.packages("ggpmisc")
 
-#library(DataExplorer)
-#DataExplorer::create_report(RawData)
-
-#library(DataExplorer)
-#plot_missing(RawData) 
-#plot_bar(RawData) 
-#plot_histogram(RawData)
 ```
 
 ```{r}
@@ -104,24 +106,28 @@ RawData_SC <- RawData %>%
 head(RawData_SC, 10)
 tail(RawData_SC, 10)
 
-#install.packages("skimr")
 library(skimr)
 skim(RawData_SC)
-
-#Install packages from MSPP file
-#library(dplyr) # manipulate dataframes
-#library(readr) # read/write dataframes
-#library(tidyr) # reshaping dataframes
-#library(stringr) # string manipulation
-#library(forcats) # factor manipulation
-#library(purrr) # iteration (instead of loops)
-#library(ggplot2) # making plots
 
 summarize(RawData_SC)
 ```
 
 ```{r}
-#install.packages("ggpmisc")
+#Creating new datasets for numeric and character variables
+#Converting to all numeric and exploring the data
+RawData_SC_Num <- mutate_all(RawData_SC, function(x) as.numeric(as.character(x)))
+library(skimr)
+skim(RawData_SC_Num)
+
+library(DataExplorer)
+DataExplorer::create_report(RawData_SC_Num)
+
+DataCharacters <- RawData_SC_Num
+DataCharacters$who_for_president <- as.character(DataCharacters$who_for_president)
+```
+
+```{r}
+#Trump vs Journalists Regression
 library(ggpmisc)
 library(ggplot2)
 my.formula <- y ~ x
@@ -141,58 +147,6 @@ ggplot(data = RawData_SC) +
     caption = "Data via ANES",
   )
 ```
-
-```{r}
-ggplot(data = RawData_LT_SC) +
-  aes(x =(year_lt), y = ft_lt_liberals, fill=factor(party_indentification) ) +
-  geom_bar(stat = "summary", width=1.75, position=position_dodge()) +
-  theme_minimal() +
-  coord_cartesian(xlim = c(1970,2016), ylim = c(0,75)) +
-  labs(
-    title = "Feeling Thermometer of Liberals by Year",
-    subtitle = "Factored by Party",
-    x = "Year",
-    y = "Feeling Thermometer",
-    caption = "Data via ANES",
-  )
-```
-
-```{r}
-#Converting to all numeric and exploring the data
-RawData_SC_Num <- mutate_all(RawData_SC, function(x) as.numeric(as.character(x)))
-library(skimr)
-skim(RawData_SC_Num)
-
-library(DataExplorer)
-DataExplorer::create_report(RawData_SC_Num)
-```
-
-```{r}
-DataCharacters <- RawData_SC_Num
-DataCharacters$who_for_president <- as.character(DataCharacters$who_for_president)
-```
-
-```{r}
-ggplot(data = DataCharacters) +
-  aes(x = who_for_president, y = ft_blm, color = factor(party_of_registration)) +
-  geom_point(size = 0.5, alpha = 0.25) +
-  stat_boxplot(fill = NA) +
-  scale_x_discrete(limits = c(1, 2)) +
-  coord_cartesian(xlim = c(1,2), ylim = c(-10,105)) +
-  labs(
-    title = "Trump vs Biden Voters Feelings on BLM",
-    subtitle = "Factored via Party",
-    x = "Biden vs. Trump",
-    y = "Feeling Thermometer",
-    caption = "Data via ANES",
-  )
-```
-
-```{r}
-library(haven)
-RawData_LongTerm <- read_dta("/Users/Keith/Downloads/anes_timeseries_cdf_dta/anes_timeseries_cdf.dta")
-```
-
 ```{r}
 #Selecting columns to keep for analysis and renaming them to make user friendly for long term data
 RawData_LT_SC <- RawData_LongTerm %>% 
@@ -218,4 +172,35 @@ RawData_LT_SC <- RawData_LongTerm %>%
 head(RawData_LT_SC, 10)
 skim(RawData_LT_SC)
 DataExplorer::create_report(RawData_LT_SC)
+```
+
+```{r}
+ggplot(data = RawData_LT_SC) +
+  aes(x =(year_lt), y = ft_lt_liberals, fill=factor(party_indentification) ) +
+  geom_bar(stat = "summary", width=1.75, position=position_dodge()) +
+  theme_minimal() +
+  coord_cartesian(xlim = c(1970,2016), ylim = c(0,75)) +
+  labs(
+    title = "Feeling Thermometer of Liberals by Year",
+    subtitle = "Factored by Party",
+    x = "Year",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
+  )
+```
+
+```{r}
+ggplot(data = DataCharacters) +
+  aes(x = who_for_president, y = ft_blm, color = factor(party_of_registration)) +
+  geom_point(size = 0.5, alpha = 0.25) +
+  stat_boxplot(fill = NA) +
+  scale_x_discrete(limits = c(1, 2)) +
+  coord_cartesian(xlim = c(1,2), ylim = c(-10,105)) +
+  labs(
+    title = "Trump vs Biden Voters Feelings on BLM",
+    subtitle = "Factored via Party",
+    x = "Biden vs. Trump",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
+  )
 ```
