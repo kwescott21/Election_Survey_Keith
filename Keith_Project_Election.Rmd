@@ -23,11 +23,14 @@ install.packages("forcats") # factor manipulation
 install.packages("purrr") # iteration (instead of loops)
 install.packages("ggplot2") # making plots
 install.packages("ggpmisc")
+install.packages("gapminder")
+install.packages("gganimate")
 
 ```
 
 ```{r}
 #Selecting columns to keep for analysis and renaming them to make user friendly
+library(dplyr)
 RawData_SC <- RawData %>% 
   select(
     sex = V201600,
@@ -103,6 +106,7 @@ RawData_SC <- RawData %>%
 
 ```{r}
 #Overview of data with selected columns
+library(tidyverse)
 head(RawData_SC, 10)
 tail(RawData_SC, 10)
 
@@ -203,4 +207,26 @@ ggplot(data = DataCharacters) +
     y = "Feeling Thermometer",
     caption = "Data via ANES",
   )
+```
+
+```{r}
+#unfinished animation graph
+RawData_LT_SC_Char <- RawData_LT_SC
+RawData_LT_SC_Char$party_indentification <- as.character(RawData_LT_SC_Char$party_indentification)
+
+library(ggplot2)
+library(gapminder)
+library(gganimate)
+
+ggplot(data = RawData_LT_SC_Char) +
+  aes(x = ft_lt_liberals, y = ft_lt_conservatives, size = income_group_lt, color = (party_indentification)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  #scale_colour_manual(values = (party_indentification)) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  facet_wrap(~party_indentification) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year_lt) +
+  ease_aes('linear')
 ```
