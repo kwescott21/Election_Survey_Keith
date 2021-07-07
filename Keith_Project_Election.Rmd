@@ -25,6 +25,7 @@ install.packages("ggplot2") # making plots
 install.packages("ggpmisc")
 install.packages("gapminder")
 install.packages("gganimate")
+install.packages("gifski")
 
 ```
 
@@ -131,6 +132,12 @@ DataCharacters$who_for_president <- as.character(DataCharacters$who_for_presiden
 ```
 
 ```{r}
+#Change sex variables for graph
+RawData_SC$sex <- as.character(RawData_SC$sex)
+RawData_SC$sex[RawData_SC$sex == "1"] <- "Male"
+RawData_SC$sex[RawData_SC$sex == "2"] <- "Female"
+RawData_SC$sex[RawData_SC$sex == "-9"] <- "Refused"
+
 #Trump vs Journalists Regression
 library(ggpmisc)
 library(ggplot2)
@@ -151,6 +158,7 @@ ggplot(data = RawData_SC) +
     caption = "Data via ANES",
   )
 ```
+
 ```{r}
 #Selecting columns to keep for analysis and renaming them to make user friendly for long term data
 RawData_LT_SC <- RawData_LongTerm %>% 
@@ -179,6 +187,14 @@ DataExplorer::create_report(RawData_LT_SC)
 ```
 
 ```{r}
+#Change party identification variables for graph
+RawData_LT_SC$party_indentification <- as.character(RawData_LT_SC$party_indentification)
+RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "1"] <- "Democrats"
+RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "2"] <- "Independents"
+RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "3"] <- "Republicans"
+RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "NA"] <- "Did not answer"
+
+#long term feeling thermometer graph
 ggplot(data = RawData_LT_SC) +
   aes(x =(year_lt), y = ft_lt_liberals, fill=factor(party_indentification) ) +
   geom_bar(stat = "summary", width=1.75, position=position_dodge()) +
@@ -194,6 +210,19 @@ ggplot(data = RawData_LT_SC) +
 ```
 
 ```{r}
+#Change party variables for graph
+DataCharacters$party_of_registration <- as.character(DataCharacters$party_of_registration)
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "-9"] <- "Refused"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "-8"] <- "Don't know"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "-7"] <- "Incomplete"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "-6"] <- "No post"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "-1"] <- "Inapplicable"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "1"] <- "Democratic"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "2"] <- "Republican"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "4"] <- "Independent"
+DataCharacters$party_of_registration[DataCharacters$party_of_registration == "5"] <- "Other (Third party)"
+
+#Box plot
 ggplot(data = DataCharacters) +
   aes(x = who_for_president, y = ft_blm, color = factor(party_of_registration)) +
   geom_point(size = 0.5, alpha = 0.25) +
@@ -210,23 +239,46 @@ ggplot(data = DataCharacters) +
 ```
 
 ```{r}
-#unfinished animation graph
+#Preparing data for animated visualization
 RawData_LT_SC_Char <- RawData_LT_SC
 RawData_LT_SC_Char$party_indentification <- as.character(RawData_LT_SC_Char$party_indentification)
+RawData_LT_SC_Char$ft_lt_liberals <- as.factor(RawData_LT_SC_Char$ft_lt_liberals)
+RawData_LT_SC_Char$ft_lt_conservatives <- as.factor(RawData_LT_SC_Char$ft_lt_conservatives)
+RawData_LT_SC_Char$income_group_lt <- as.factor(RawData_LT_SC_Char$income_group_lt)
+RawData_LT_SC_Char$year_lt <- as.integer(RawData_LT_SC_Char$year_lt)
+Data_LT_SC_C_NoNA <- RawData_LT_SC_Char
+Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$ft_lt_liberals),]
+Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$ft_lt_conservatives),]
+Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$income_group_lt),]
+Data_LT_SC_C_NoNA$party_indentification <- (complete.cases(RawData_LT_SC_Char$party_indentification))
+Data_LT_SC_C_NoNA$ft_lt_liberals <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_liberals)
+Data_LT_SC_C_NoNA$ft_lt_conservatives <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_conservatives)
+Data_LT_SC_C_NoNA$income_group_lt <- as.numeric(Data_LT_SC_C_NoNA$income_group_lt)
+Data_LT_SC_C_NoNA$ft_lt_labor_unions <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_labor_unions)
+Data_LT_SC_C_NoNA$ift_lt_big_business <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_big_business)
+Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "1"] <- "Democrats"
+Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "2"] <- "Independents"
+Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "3"] <- "Republicans"
+Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "NA"] <- "Did not answer"
+```
 
+```{r}
+#animation graph
 library(ggplot2)
 library(gapminder)
 library(gganimate)
 
-ggplot(data = RawData_LT_SC_Char) +
+animate(ggplot((data = Data_LT_SC_C_NoNA)) +
   aes(x = ft_lt_liberals, y = ft_lt_conservatives, size = income_group_lt, color = (party_indentification)) +
   geom_point(alpha = 0.7, show.legend = FALSE) +
+  coord_cartesian(xlim = c(-15,115), ylim = c(-15,115)) +
   #scale_colour_manual(values = (party_indentification)) +
-  scale_size(range = c(2, 12)) +
-  scale_x_log10() +
   facet_wrap(~party_indentification) +
   # Here comes the gganimate specific bits
-  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
-  transition_time(year_lt) +
-  ease_aes('linear')
+  labs(title = 'Feeling Thermometer - Conservative vs Liberal by Year: {closest_state}', subtitle = "Split via Party - Size via Income Group", x = 'Feeling Thermometer - Liberals', y = 'Feeling Thermometer - Conservatives',caption = "Data via ANES") +
+  transition_states(year_lt, transition_length = 1, state_length = 1000,
+                    wrap = TRUE) +
+     enter_fade() +
+  exit_fade() +
+  ease_aes('linear'),renderer = gifski_renderer())
 ```
