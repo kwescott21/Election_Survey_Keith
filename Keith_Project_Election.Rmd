@@ -200,51 +200,155 @@ view(Fit_test)
 
 
 ```{r}
-#Test regressions
 library(ggpmisc)
 library(ggplot2)
 my.formula <- y ~ x
-plt2 <- ggplot(data = RawData_SC) +
-  aes(x = ft_capitalists, y = ft_socialists) +
-  geom_jitter(size = 0.5, alpha = 0.25) +
+ggplot(data = RawData_SC) +
+  aes(x = ft_joe_biden, y = ft_journalists, color = factor(sex)) +
+  geom_point(size = 0.5, alpha = 0.25) +
   geom_smooth(method=lm, se=TRUE, show.legend=TRUE,formula = my.formula) +
    stat_poly_eq(formula = my.formula, 
                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                 parse = TRUE) + 
-  scale_x_continuous(limits = c(0, 100)) +
-  scale_y_continuous(limits = c(0, 100)) +
- 
+  coord_cartesian(ylim = c(-10,110)) +
   labs(
-    title = "Capitalist vs Socialists",
+    title = "Biden vs Journalists Thermometers",
     subtitle = "Factored via Sex",
-    x = "Trump",
+    x = "Biden",
     y = "Journalists",
     caption = "Data via ANES",
   )
-
- add_pval(plt2, pairs = list(c(1,3)), test="wilcox.test")
 ```
 ```{r}
 RawData_SC$who_for_president <- as.character(RawData_SC$who_for_president)
-RawData_SC$who_for_president[RawData_SC$who_for_president == "1"] <- "Joe Biden"
-RawData_SC$who_for_president[RawData_SC$who_for_president == "2"] <- "Donald Trump"
+RawData_SC$who_for_president[RawData_SC$who_for_president == "1"] <- "Biden"
+RawData_SC$who_for_president[RawData_SC$who_for_president == "2"] <- "Trump"
 ```
 
 ```{r}
-ggplot(data = RawData_SC) +
-  aes(x =who_for_president, y = ft_rural_americans) +
-  geom_bar(stat = "summary", width=1, color="firebrick2", fill="royalblue4", position = 'dodge') +
-  scale_x_discrete(limits=c("Joe Biden", "Donald Trump")) +
+ra_plot <- ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_rural_americans, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
   #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
   theme_minimal() +
+  theme(legend.position="none") +
   labs(
-    title = "Feeling Thermometer of Rural Americans by Presidential Vote",
-    subtitle = "Factored by Party",
-    x = "Who Individual Voted For",
-    y = "Feeling Thermometer 0-100",
-    caption = "Data via ANES",
+    title = "Rural Americans ",
+    x = NULL,
+    y = NULL
   )
+```
+
+```{r}
+fem_plot <- ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_fauci, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "Fauci",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+mus_plot <- ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_muslims, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "Muslims ",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+me_too_plot <- ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_me_too, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "Me Too ",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+library(ggplot2)
+figure1 <- ggarrange(ra_plot, fem_plot, mus_plot, me_too_plot) 
+
+ annotate_figure(figure1,
+               top = text_grob("Feeling Thermometer - Dissagreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               bottom = text_grob("Data source: ANES", color = "grey5",
+                                  hjust = 1, x = 1, face = "italic", size = 10),
+               left = text_grob("Feeling Thermometer 0-100", color = "grey5", rot = 90))
+
+```
+
+```{r}
+con_plot <-ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_congress, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "Congress ",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+bus_plot <- ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_big_business, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "Big Business",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+library(ggplot2)
+figure2 <- ggarrange(con_plot, bus_plot) 
+
+ annotate_figure(figure2,
+               top = text_grob("Feeling Thermometer - Somewhat Agreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               bottom = text_grob("Data source: ANES", color = "grey5",
+                                  hjust = 1, x = 1, face = "italic", size = 10),
+               left = text_grob("Feeling Thermometer 0-100", color = "grey5", rot = 90))
+
 ```
 
 ```{r}
@@ -484,3 +588,87 @@ animate(ggplot((data = lt_2020_filterd6)) +
   ease_aes('linear'),renderer = gifski_renderer(), duration = 30, end_pause = 45, fps = 30)
 ```
 
+```{r}
+#Import Data for Media Overview
+library(haven)
+RawData_SC_2 <- read_dta("/Users/Keith/Downloads/anes_timeseries_2020_stata_20210324/anes_timeseries_2020_stata_20210324.dta")
+
+library(dplyr)
+RawData_SC_Media <- RawData_SC_2 %>% 
+  select(
+    sex = V201600,
+    party_of_registration = V202064,
+    who_for_president = V202073,
+    tv_programs = V201629a,
+    newspapers = V201629b,
+    internet = V201629c,
+    radio = V201629d,
+    stephen_colbert = V201630a,
+    hannity = V201630b,
+    tucker_carlson = V201630c,
+    rachel_maddow = V201630d,
+    the_five = V201630f,
+    laura_ingram = V201630g,
+    anderson_cooper = V201630j,
+    abc = V201630n,
+    nbc = V201630p,
+    fox_friends = V201631k,
+    morning_joe = V201631m,
+    pbs = V201631q,
+    nyt = V201636a,
+    fox_com = V201634f
+  )
+
+RawData_SC_Media$who_for_president <- as.character(RawData_SC_Media$who_for_president)
+RawData_SC_Media$who_for_president[RawData_SC_Media$who_for_president == "1"] <- "Biden"
+RawData_SC_Media$who_for_president[RawData_SC_Media$who_for_president == "2"] <- "Trump"
+```
+
+```{r}
+fox_plot <- 
+  ggplot(data = RawData_SC_Media) +
+  aes(x =who_for_president, y =   fox_com, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 1)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "FoxNews.com ",
+     x = NULL,
+     y = NULL
+  )
+```
+```{r}
+nyt_plot <- 
+  ggplot(data = RawData_SC_Media) +
+  aes(x =who_for_president, y =   nyt, fill=who_for_president) +
+  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  scale_x_discrete(limits=c("Biden", "Trump")) +
+  scale_y_continuous(limits=c(0, 1)) +
+  scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  theme(legend.position="none") +
+  labs(
+    title = "NewYorkTimes.com ",
+     x = NULL,
+     y = NULL
+  )
+```
+
+```{r}
+library(ggplot2)
+figure3 <- ggarrange(fox_plot, nyt_plot) 
+
+ annotate_figure(figure3,
+               top = text_grob("News Sources By Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               bottom = text_grob("Data source: ANES", color = "grey5",
+                                  hjust = 1, x = 1, face = "italic", size = 10),
+               left = text_grob("Percentage Use", color = "grey5", rot = 90))
+
+```
