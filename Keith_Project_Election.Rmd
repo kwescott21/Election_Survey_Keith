@@ -14,19 +14,46 @@ RawData_LongTerm <- read_dta("/Users/Keith/Downloads/anes_timeseries_cdf_dta/ane
 
 ```{r}
 #Install packages, only run if first time using file
-install.packages("skimr")
-install.packages("dplyr") # manipulate dataframes
-install.packages("readr") # read/write dataframes
-install.packages("tidyr") # reshaping dataframes
-install.packages("stringr") # string manipulation
-install.packages("forcats") # factor manipulation
-install.packages("purrr") # iteration (instead of loops)
-install.packages("ggplot2") # making plots
-install.packages("ggpmisc")
-install.packages("gapminder")
-install.packages("gganimate")
-install.packages("gifski")
 
+#install.packages("skimr")
+#install.packages("dplyr") # manipulate dataframes
+#install.packages("readr") # read/write dataframes
+#install.packages("tidyr") # reshaping dataframes
+#install.packages("stringr") # string manipulation
+#install.packages("forcats") # factor manipulation
+#install.packages("purrr") # iteration (instead of loops)
+#install.packages("ggplot2") # making plots
+#install.packages("ggpmisc")
+#install.packages("gapminder")
+#install.packages("gganimate")
+#install.packages("gifski")
+#install.packages("broom")
+#install.packages("ggpval")
+#install.packages("tweenr")
+
+```
+```{r}
+#open librarys for analysis
+library(tidyverse)
+library(readr)
+library(tidyr)
+library(stringr)
+library(forcats)
+library(purrr)
+library(fs)
+library(skimr)
+library(ggpubr)
+library(broom)
+library(ggpmisc)
+library(ggplot2)
+library(gtsummary)
+library(gt)
+library(dplyr)
+library(gapminder)
+library(gganimate)
+library(gifski)
+library(ggpval)
+library(tweenr)
 ```
 
 ```{r}
@@ -114,7 +141,7 @@ tail(RawData_SC, 10)
 library(skimr)
 skim(RawData_SC)
 
-summarize(RawData_SC)
+#summarize(RawData_SC)
 ```
 
 ```{r}
@@ -124,8 +151,8 @@ RawData_SC_Num <- mutate_all(RawData_SC, function(x) as.numeric(as.character(x))
 library(skimr)
 skim(RawData_SC_Num)
 
-library(DataExplorer)
-DataExplorer::create_report(RawData_SC_Num)
+#library(DataExplorer)
+#DataExplorer::create_report(RawData_SC_Num)
 
 DataCharacters <- RawData_SC_Num
 DataCharacters$who_for_president <- as.character(DataCharacters$who_for_president)
@@ -155,6 +182,67 @@ ggplot(data = RawData_SC) +
     subtitle = "Factored via Sex",
     x = "Trump",
     y = "Journalists",
+    caption = "Data via ANES",
+  )
+```
+
+
+```{r}
+#P Value Analysis of above regressions
+Fit_Trump_Journalist_Sex <- lm(ft_donald_trump ~ ft_journalists + sex, data = RawData_SC)%>% 
+    tidy()
+view(Fit_Trump_Journalist_Sex)
+
+Fit_test <- lm(ft_donald_trump ~ ft_journalists + sex, data = RawData_SC)%>% 
+    tidy()
+view(Fit_test)
+```
+
+
+```{r}
+#Test regressions
+library(ggpmisc)
+library(ggplot2)
+my.formula <- y ~ x
+plt2 <- ggplot(data = RawData_SC) +
+  aes(x = ft_capitalists, y = ft_socialists) +
+  geom_jitter(size = 0.5, alpha = 0.25) +
+  geom_smooth(method=lm, se=TRUE, show.legend=TRUE,formula = my.formula) +
+   stat_poly_eq(formula = my.formula, 
+                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+                parse = TRUE) + 
+  scale_x_continuous(limits = c(0, 100)) +
+  scale_y_continuous(limits = c(0, 100)) +
+ 
+  labs(
+    title = "Capitalist vs Socialists",
+    subtitle = "Factored via Sex",
+    x = "Trump",
+    y = "Journalists",
+    caption = "Data via ANES",
+  )
+
+ add_pval(plt2, pairs = list(c(1,3)), test="wilcox.test")
+```
+```{r}
+RawData_SC$who_for_president <- as.character(RawData_SC$who_for_president)
+RawData_SC$who_for_president[RawData_SC$who_for_president == "1"] <- "Joe Biden"
+RawData_SC$who_for_president[RawData_SC$who_for_president == "2"] <- "Donald Trump"
+```
+
+```{r}
+ggplot(data = RawData_SC) +
+  aes(x =who_for_president, y = ft_rural_americans) +
+  geom_bar(stat = "summary", width=1, color="firebrick2", fill="royalblue4", position = 'dodge') +
+  scale_x_discrete(limits=c("Joe Biden", "Donald Trump")) +
+  scale_y_continuous(limits=c(0, 100)) +
+  #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
+  theme_minimal() +
+  labs(
+    title = "Feeling Thermometer of Rural Americans by Presidential Vote",
+    subtitle = "Factored by Party",
+    x = "Who Individual Voted For",
+    y = "Feeling Thermometer 0-100",
     caption = "Data via ANES",
   )
 ```
@@ -193,15 +281,105 @@ RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "1"] 
 RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "2"] <- "Independents"
 RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "3"] <- "Republicans"
 RawData_LT_SC$party_indentification[RawData_LT_SC$party_indentification == "NA"] <- "Did not answer"
+```
 
+```{r}
+#making combined data set
+library(dplyr)
+
+
+RawData_SC_Num_Sm <- RawData_SC_Num %>% 
+  select(
+    sex,
+    total_income,
+    party_of_registration,
+    ft_christian_fund,
+    ft_feminists,
+    ft_liberals,
+    ft_labor_unions,
+    ft_big_business,
+    ft_conservatives,
+    ft_congress,
+    ft_police,
+    ft_jews)
+
+RawData_SC_Num_Sm <- RawData_SC_Num_Sm %>% mutate(year_lt = 2020)
+
+RawData_SC_Num_Sm <- RawData_SC_Num %>% 
+  rename(
+    gender_lt = sex,
+    income_group_lt = total_income,
+    party_indentification = party_of_registration,
+    ft_lt_christian_fund = ft_christian_fund,
+    ft_lt_feminists = ft_feminists,
+    ft_lt_liberals = ft_liberals,
+    ft_lt_labor_unions = ft_labor_unions,
+    ft_lt_big_business = ft_big_business,
+    ft_lt_conservatives = ft_conservatives,
+    ft_lt_congress = ft_congress,
+    ft_lt_police = ft_police,
+    ft_lt_jews = ft_jews)
+
+RawData_SC_Num_Sm_2 <- RawData_SC_Num_Sm[,c("year_lt", "gender_lt", "income_group_lt", "party_indentification","ft_lt_christian_fund",  "ft_lt_feminists", "ft_lt_liberals","ft_lt_labor_unions","ft_lt_big_business","ft_lt_conservatives", "ft_lt_congress", "ft_lt_police", "ft_lt_jews")]
+
+long_term_2020 <- rbind(Data_LT_SC_C_NoNA, RawData_SC_Num_Sm_2)
+
+long_term_2020$party_indentification[long_term_2020$party_indentification == "1"] <- "Democrats"
+long_term_2020$party_indentification[long_term_2020$party_indentification == "4"] <- "Independents"
+long_term_2020$party_indentification[long_term_2020$party_indentification == "2"] <- "Republicans"
+
+lt_2020_filterd <- long_term_2020[!long_term_2020$party_indentification == "-1" | long_term_2020$party_indentification == "-6" | long_term_2020$party_indentification == "-7" | long_term_2020$party_indentification == "-8" | long_term_2020$party_indentification == "-9" | long_term_2020$party_indentification == "5",]
+
+lt_2020_filterd2 <- lt_2020_filterd[!lt_2020_filterd$party_indentification == "-6",]
+lt_2020_filterd3 <- lt_2020_filterd2[!lt_2020_filterd2$party_indentification == "-7",]
+lt_2020_filterd4 <- lt_2020_filterd3[!lt_2020_filterd3$party_indentification == "5",]
+lt_2020_filterd5 <- lt_2020_filterd4[!is.na(lt_2020_filterd4$party_indentification),]
+lt_2020_filterd6 <- lt_2020_filterd5[!lt_2020_filterd5$party_indentification == "Independents",]
+```    
+
+```{r}
 #long term feeling thermometer graph
-ggplot(data = RawData_LT_SC) +
+ggplot(data = lt_2020_filterd6) +
   aes(x =(year_lt), y = ft_lt_liberals, fill=factor(party_indentification) ) +
   geom_bar(stat = "summary", width=1.75, position=position_dodge()) +
   theme_minimal() +
-  coord_cartesian(xlim = c(1970,2016), ylim = c(0,75)) +
+  coord_cartesian(xlim = c(1970,2020), ylim = c(0,75)) +
   labs(
     title = "Feeling Thermometer of Liberals by Year",
+    subtitle = "Factored by Party",
+    x = "Year",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
+  )
+```
+
+```{r}
+#long term feeling thermometer graph
+ggplot(data = lt_2020_filterd6) +
+  aes(x =(year_lt), y = ft_lt_liberals, color=factor(party_indentification) ) +
+  geom_line(stat = "summary", width=1.75, position=position_dodge()) +
+  theme_minimal() +
+  scale_colour_manual(values =  c("Democrats" = "blue",  "Republicans" = "red")) +
+  coord_cartesian(xlim = c(1970,2020), ylim = c(0,75)) +
+  labs(
+    title = "Feeling Thermometer of Liberals by Year",
+    subtitle = "Factored by Party",
+    x = "Year",
+    y = "Feeling Thermometer",
+    caption = "Data via ANES",
+  )
+```
+
+```{r}
+#long term feeling thermometer graph
+ggplot(data = lt_2020_filterd6) +
+  aes(x =(year_lt), y = ft_lt_conservatives, color=factor(party_indentification) ) +
+  geom_line(stat = "summary", width=1.75, position=position_dodge()) +
+  theme_minimal() +
+  scale_colour_manual(values =  c("Democrats" = "blue",  "Republicans" = "red")) +
+  coord_cartesian(xlim = c(1970,2020), ylim = c(0,75)) +
+  labs(
+    title = "Feeling Thermometer of Conservatives by Year",
     subtitle = "Factored by Party",
     x = "Year",
     y = "Feeling Thermometer",
@@ -221,7 +399,9 @@ DataCharacters$party_of_registration[DataCharacters$party_of_registration == "1"
 DataCharacters$party_of_registration[DataCharacters$party_of_registration == "2"] <- "Republican"
 DataCharacters$party_of_registration[DataCharacters$party_of_registration == "4"] <- "Independent"
 DataCharacters$party_of_registration[DataCharacters$party_of_registration == "5"] <- "Other (Third party)"
+```
 
+```{r}
 #Box plot
 ggplot(data = DataCharacters) +
   aes(x = who_for_president, y = ft_blm, color = factor(party_of_registration)) +
@@ -248,14 +428,11 @@ RawData_LT_SC_Char$income_group_lt <- as.factor(RawData_LT_SC_Char$income_group_
 RawData_LT_SC_Char$year_lt <- as.integer(RawData_LT_SC_Char$year_lt)
 Data_LT_SC_C_NoNA <- RawData_LT_SC_Char
 Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$ft_lt_liberals),]
-Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$ft_lt_conservatives),]
-Data_LT_SC_C_NoNA <- Data_LT_SC_C_NoNA[complete.cases(RawData_LT_SC_Char$income_group_lt),]
-Data_LT_SC_C_NoNA$party_indentification <- (complete.cases(RawData_LT_SC_Char$party_indentification))
 Data_LT_SC_C_NoNA$ft_lt_liberals <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_liberals)
 Data_LT_SC_C_NoNA$ft_lt_conservatives <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_conservatives)
 Data_LT_SC_C_NoNA$income_group_lt <- as.numeric(Data_LT_SC_C_NoNA$income_group_lt)
 Data_LT_SC_C_NoNA$ft_lt_labor_unions <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_labor_unions)
-Data_LT_SC_C_NoNA$ift_lt_big_business <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_big_business)
+Data_LT_SC_C_NoNA$ft_lt_big_business <- as.numeric(Data_LT_SC_C_NoNA$ft_lt_big_business)
 Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "1"] <- "Democrats"
 Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "2"] <- "Independents"
 Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification == "3"] <- "Republicans"
@@ -263,7 +440,7 @@ Data_LT_SC_C_NoNA$party_indentification[Data_LT_SC_C_NoNA$party_indentification 
 ```
 
 ```{r}
-#animation graph
+#animation graph original
 library(ggplot2)
 library(gapminder)
 library(gganimate)
@@ -282,3 +459,28 @@ animate(ggplot((data = Data_LT_SC_C_NoNA)) +
   exit_fade() +
   ease_aes('linear'),renderer = gifski_renderer())
 ```
+
+```{r}
+#updated and final animated graph
+library(ggplot2)
+library(gapminder)
+library(gganimate)
+library(tweenr)
+
+animate(ggplot((data = lt_2020_filterd6)) +
+  aes(size = 1.5) +
+  geom_jitter(alpha = 0.7, show.legend = TRUE, aes(x = ft_lt_liberals, y = ft_lt_conservatives, color =party_indentification)) +
+  coord_cartesian(xlim = c(0,100), ylim = c(0,100)) +
+  scale_colour_manual(values =  c("Democrats" = "blue",  "Republicans" = "red")) +
+  facet_wrap(~party_indentification) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Feeling Thermometer - Conservative vs Liberal by Year', subtitle =  "{closest_state}", x = 'Feeling Thermometer - Liberals', y = 'Feeling Thermometer - Conservatives',caption = "Data via ANES") +
+  theme(plot.subtitle = element_text(color="red", size=14, face="bold.italic"), legend.position="bottom", legend.box = "horizontal") +
+  guides(size = FALSE) +
+  transition_states(year_lt, transition_length = 1, state_length = 3,
+                    wrap = FALSE) +
+  enter_fade() +
+  exit_fade() +
+  ease_aes('linear'),renderer = gifski_renderer(), duration = 30, end_pause = 45, fps = 30)
+```
+
