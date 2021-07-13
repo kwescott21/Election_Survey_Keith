@@ -1,15 +1,25 @@
+#---
+#title: "Election 2020 Analysis, Polarization"
+#description: |
+# Exploratory analysis of the increasing polarization across USA elections. 
+#author:
+ # - name: Keith Wescott
+ #   url: https://github.com/kwescott21
+#date: July 15th, 2021
+#---
+
 ```{r}
 #Download data from this link:
 #https://drive.google.com/drive/folders/1Fkkyi6w9h0ZDo1vcuOaAVi-I-l2QXOYg?usp=sharing
-#Change paths on file. Data is too large to upload to GitHub
+#Place files in project folder. Data is too large to upload to GitHub
 
 #Import 2020 Survey Data
 library(haven)
-RawData <- read_dta("/Users/Keith/Downloads/anes_timeseries_2020_stata_20210324/anes_timeseries_2020_stata_20210324.dta")
+RawData <- read_dta("anes_timeseries_2020_stata_20210324.dta")
 
 #Import Long-Term Data
 library(haven)
-RawData_LongTerm <- read_dta("/Users/Keith/Downloads/anes_timeseries_cdf_dta/anes_timeseries_cdf.dta")
+RawData_LongTerm <- read_dta("anes_timeseries_cdf.dta")
 ```
 
 ```{r}
@@ -164,12 +174,13 @@ RawData_SC$sex <- as.character(RawData_SC$sex)
 RawData_SC$sex[RawData_SC$sex == "1"] <- "Male"
 RawData_SC$sex[RawData_SC$sex == "2"] <- "Female"
 RawData_SC$sex[RawData_SC$sex == "-9"] <- "Refused"
+RawData_SC_SCatter <- RawData_SC[!RawData_SC$sex == "Refused",]
 
 #Trump vs Journalists Regression
 library(ggpmisc)
 library(ggplot2)
 my.formula <- y ~ x
-ggplot(data = RawData_SC) +
+ggplot(data = RawData_SC_SCatter) +
   aes(x = ft_donald_trump, y = ft_journalists, color = factor(sex)) +
   geom_point(size = 0.5, alpha = 0.25) +
   geom_smooth(method=lm, se=TRUE, show.legend=TRUE,formula = my.formula) +
@@ -177,33 +188,39 @@ ggplot(data = RawData_SC) +
                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                 parse = TRUE) + 
   coord_cartesian(ylim = c(-10,110)) +
+  scale_colour_manual(values =  c("Female" = "darkorange3",  "Male" = "springgreen4")) +
   labs(
-    title = "Trump vs Journalists Thermometers",
+    title = "Feeling Thermometers (0-100 rating) of Terms 'Trump' vs. 'Journalists'",
     subtitle = "Factored via Sex",
     x = "Trump",
     y = "Journalists",
     caption = "Data via ANES",
   )
 ```
-
+```{r}
+#Saving previous graph
+ggsave(filename = "TrumpvJournalist.png", plot = last_plot(), path = "Visualizations")
+ 
+```
 
 ```{r}
 #P Value Analysis of above regressions
-Fit_Trump_Journalist_Sex <- lm(ft_donald_trump ~ ft_journalists + sex, data = RawData_SC)%>% 
+Fit_Trump_Journalist_Sex <- lm(ft_donald_trump ~ ft_journalists + sex, data = RawData_SC_SCatter)%>% 
     tidy()
 view(Fit_Trump_Journalist_Sex)
 
-Fit_test <- lm(ft_donald_trump ~ ft_journalists + sex, data = RawData_SC)%>% 
+Fit_Biden_Journalist_Sex <- lm(ft_joe_biden~ ft_journalists + sex, data = RawData_SC_SCatter)%>% 
     tidy()
-view(Fit_test)
+view(Fit_Biden_Journalist_Sex)
 ```
 
 
 ```{r}
+#Regression of feeling thermometer of terms "Biden" and "Journalists"
 library(ggpmisc)
 library(ggplot2)
 my.formula <- y ~ x
-ggplot(data = RawData_SC) +
+ggplot(data = RawData_SC_SCatter) +
   aes(x = ft_joe_biden, y = ft_journalists, color = factor(sex)) +
   geom_point(size = 0.5, alpha = 0.25) +
   geom_smooth(method=lm, se=TRUE, show.legend=TRUE,formula = my.formula) +
@@ -211,24 +228,40 @@ ggplot(data = RawData_SC) +
                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                 parse = TRUE) + 
   coord_cartesian(ylim = c(-10,110)) +
+  scale_colour_manual(values =  c("Female" = "darkorange3",  "Male" = "springgreen4")) +
   labs(
-    title = "Biden vs Journalists Thermometers",
+    title = "Feeling Thermometers (0-100 rating) of Terms 'Biden' vs. 'Journalists'",
     subtitle = "Factored via Sex",
     x = "Biden",
     y = "Journalists",
     caption = "Data via ANES",
   )
 ```
+
 ```{r}
+#Saving previous plot
+ggsave(filename = "BidenvJournalist.png", plot = last_plot(), path = "Visualizations")
+ 
+```
+
+```{r}
+#Rename column "who for president" from numbres to their names
 RawData_SC$who_for_president <- as.character(RawData_SC$who_for_president)
 RawData_SC$who_for_president[RawData_SC$who_for_president == "1"] <- "Biden"
 RawData_SC$who_for_president[RawData_SC$who_for_president == "2"] <- "Trump"
 ```
 
 ```{r}
+#rural americans plot
+library(tidyverse)
+library(ggplot2)
 ra_plot <- ggplot(data = RawData_SC) +
-  aes(x =who_for_president, y = ft_rural_americans, fill=who_for_president) +
-  geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  aes(x =who_for_president, y = round(ft_rural_americans, digits = 0), fill=who_for_president) +
+  geom_bar(stat = "summary",fun= "mean", width=1, color="gray1", position = 'dodge') +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_rural_americans, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -236,16 +269,21 @@ ra_plot <- ggplot(data = RawData_SC) +
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Rural Americans ",
+    title = "Term 'Rural Americans' ",
     x = NULL,
     y = NULL
   )
 ```
 
 ```{r}
+#feminist plot
 fem_plot <- ggplot(data = RawData_SC) +
-  aes(x =who_for_president, y = ft_fauci, fill=who_for_president) +
+  aes(x =who_for_president, y = round(ft_fauci,digits = 0), fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_fauci, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -253,16 +291,21 @@ fem_plot <- ggplot(data = RawData_SC) +
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Fauci",
+    title = "Term 'Fauci'",
      x = NULL,
      y = NULL
   )
 ```
 
 ```{r}
+#muslim plot
 mus_plot <- ggplot(data = RawData_SC) +
-  aes(x =who_for_president, y = ft_muslims, fill=who_for_president) +
+  aes(x =who_for_president, y = round(ft_muslims, digits=0), fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_muslims, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -270,45 +313,62 @@ mus_plot <- ggplot(data = RawData_SC) +
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Muslims ",
+    title = "Term 'Muslims' ",
      x = NULL,
      y = NULL
   )
 ```
 
 ```{r}
+#me too plot
 me_too_plot <- ggplot(data = RawData_SC) +
-  aes(x =who_for_president, y = ft_me_too, fill=who_for_president) +
+  aes(x =who_for_president, y = round(ft_me_too, digits=0), fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
   scale_x_discrete(limits=c("Biden", "Trump")) +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_me_too, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
   #geom_text(aes(label=round(..y..,2)), fun.y=mean, geom="text", vjust=-0.25, size=3.5, position=position_dodge(width=1))+
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Me Too ",
+    title = "Term 'Me Too' ",
      x = NULL,
      y = NULL
   )
 ```
 
 ```{r}
+#plot final combined graphs above
 library(ggplot2)
-figure1 <- ggarrange(ra_plot, fem_plot, mus_plot, me_too_plot) 
+figure1 <- ggarrange(ra_plot, fem_plot, mus_plot, me_too_plot, common.legend = TRUE, legend="bottom") 
 
  annotate_figure(figure1,
-               top = text_grob("Feeling Thermometer - Dissagreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               top = text_grob("Feeling Thermometer Averages - Dissagreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
                bottom = text_grob("Data source: ANES", color = "grey5",
                                   hjust = 1, x = 1, face = "italic", size = 10),
-               left = text_grob("Feeling Thermometer 0-100", color = "grey5", rot = 90))
+               left = text_grob("Feeling Thermometer Rated 0-100", color = "grey5", rot = 90))
 
 ```
 
 ```{r}
+#Saving previous plot
+ggsave(filename = "Feeling Thermometer Disagreements.png", plot = last_plot(), path = "Visualizations")
+ 
+```
+
+```{r}
+#congress plot
 con_plot <-ggplot(data = RawData_SC) +
   aes(x =who_for_president, y = ft_congress, fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_congress, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -316,16 +376,21 @@ con_plot <-ggplot(data = RawData_SC) +
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Congress ",
+    title = "Term 'Congress' ",
      x = NULL,
      y = NULL
   )
 ```
 
 ```{r}
+#big business plot
 bus_plot <- ggplot(data = RawData_SC) +
   aes(x =who_for_president, y = ft_big_business, fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(ft_big_business, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =0),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 100)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -333,22 +398,29 @@ bus_plot <- ggplot(data = RawData_SC) +
   theme_minimal() +
   theme(legend.position="none") +
   labs(
-    title = "Big Business",
+    title = "Term 'Big Business'",
      x = NULL,
      y = NULL
   )
 ```
 
 ```{r}
+#plot final combined graphs above
 library(ggplot2)
-figure2 <- ggarrange(con_plot, bus_plot) 
+figure2 <- ggarrange(con_plot, bus_plot, common.legend = TRUE, legend="bottom") 
 
  annotate_figure(figure2,
-               top = text_grob("Feeling Thermometer - Somewhat Agreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               top = text_grob("Feeling Thermometer Averages - Agreements by Presidential Vote", color = "firebrick4", face = "bold", size = 14),
                bottom = text_grob("Data source: ANES", color = "grey5",
                                   hjust = 1, x = 1, face = "italic", size = 10),
-               left = text_grob("Feeling Thermometer 0-100", color = "grey5", rot = 90))
+               left = text_grob("Feeling Thermometer Rated 0-100", color = "grey5", rot = 90))
 
+```
+
+```{r}
+#Saving previous plot
+ggsave(filename = "Feeling Thermometer Agreements.png", plot = last_plot(), path = "Visualizations")
+ 
 ```
 
 ```{r}
@@ -373,6 +445,7 @@ RawData_LT_SC <- RawData_LongTerm %>%
 ```
 
 ```{r}
+#explore long term selected data
 head(RawData_LT_SC, 10)
 skim(RawData_LT_SC)
 DataExplorer::create_report(RawData_LT_SC)
@@ -466,12 +539,18 @@ ggplot(data = lt_2020_filterd6) +
   scale_colour_manual(values =  c("Democrats" = "blue",  "Republicans" = "red")) +
   coord_cartesian(xlim = c(1970,2020), ylim = c(0,75)) +
   labs(
-    title = "Feeling Thermometer of Liberals by Year",
+    title = "Feeling Thermometer of Term 'Liberals' by Year",
     subtitle = "Factored by Party",
     x = "Year",
-    y = "Feeling Thermometer",
+    y = "Feeling Thermometer Rated 0-100",
     caption = "Data via ANES",
   )
+```
+
+```{r}
+#Saving previous plot
+ggsave(filename = "Feeling Thermometer Liberals Line.png", plot = last_plot(), path = "Visualizations")
+ 
 ```
 
 ```{r}
@@ -483,12 +562,18 @@ ggplot(data = lt_2020_filterd6) +
   scale_colour_manual(values =  c("Democrats" = "blue",  "Republicans" = "red")) +
   coord_cartesian(xlim = c(1970,2020), ylim = c(0,75)) +
   labs(
-    title = "Feeling Thermometer of Conservatives by Year",
+    title = "Feeling Thermometer of Term 'Conservatives' by Year",
     subtitle = "Factored by Party",
     x = "Year",
-    y = "Feeling Thermometer",
+    y = "Feeling Thermometer Rated 0-100",
     caption = "Data via ANES",
   )
+```
+
+```{r}
+#Saving previous plot
+ggsave(filename = "Feeling Thermometer Conservatives Line.png", plot = last_plot(), path = "Visualizations")
+ 
 ```
 
 ```{r}
@@ -566,6 +651,7 @@ animate(ggplot((data = Data_LT_SC_C_NoNA)) +
 
 ```{r}
 #updated and final animated graph
+#WARNING TAKES SIGNIFICANT TIME AND COMPUTING POWER TO RENDER
 library(ggplot2)
 library(gapminder)
 library(gganimate)
@@ -592,7 +678,7 @@ animate(ggplot((data = lt_2020_filterd6)) +
 #Import Data for Media Overview
 library(haven)
 RawData_SC_2 <- read_dta("/Users/Keith/Downloads/anes_timeseries_2020_stata_20210324/anes_timeseries_2020_stata_20210324.dta")
-
+#selected columns
 library(dplyr)
 RawData_SC_Media <- RawData_SC_2 %>% 
   select(
@@ -618,18 +704,23 @@ RawData_SC_Media <- RawData_SC_2 %>%
     nyt = V201636a,
     fox_com = V201634f
   )
-
+#Labling for biden and trump
 RawData_SC_Media$who_for_president <- as.character(RawData_SC_Media$who_for_president)
 RawData_SC_Media$who_for_president[RawData_SC_Media$who_for_president == "1"] <- "Biden"
 RawData_SC_Media$who_for_president[RawData_SC_Media$who_for_president == "2"] <- "Trump"
 ```
 
 ```{r}
+#Fox news plot
 fox_plot <- 
   ggplot(data = RawData_SC_Media) +
   aes(x =who_for_president, y =   fox_com, fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(fox_com, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =2),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 1)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -642,12 +733,18 @@ fox_plot <-
      y = NULL
   )
 ```
+
 ```{r}
+#NYT plot
 nyt_plot <- 
   ggplot(data = RawData_SC_Media) +
   aes(x =who_for_president, y =   nyt, fill=who_for_president) +
   geom_bar(stat = "summary", width=1, color="gray1", position = 'dodge') +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
+  geom_text(stat = "summary", fun = "mean",
+            position = position_dodge(width = 1),
+            aes(y = stage(nyt, after_stat = y / 2),group = round(after_stat(y)),
+                label = round(after_stat(y),digits =2),vjust=0)) +
   scale_x_discrete(limits=c("Biden", "Trump")) +
   scale_y_continuous(limits=c(0, 1)) +
   scale_fill_manual(values =  c("Biden" = "blue",  "Trump" = "red")) +
@@ -662,13 +759,23 @@ nyt_plot <-
 ```
 
 ```{r}
+#Final plot for media visualization combinations
 library(ggplot2)
-figure3 <- ggarrange(fox_plot, nyt_plot) 
+figure3 <- ggarrange(fox_plot, nyt_plot, common.legend = TRUE, legend="bottom") 
 
  annotate_figure(figure3,
-               top = text_grob("News Sources By Presidential Vote", color = "firebrick4", face = "bold", size = 14),
+               top = text_grob("Fox News vs New York Times Percentage Use By Presidential Vote", color = "firebrick4", face = "bold", size = 14),
                bottom = text_grob("Data source: ANES", color = "grey5",
                                   hjust = 1, x = 1, face = "italic", size = 10),
                left = text_grob("Percentage Use", color = "grey5", rot = 90))
 
 ```
+
+
+```{r}
+#Saving previous plot
+ggsave(filename = "FoxNewsvsNYT.png", plot = last_plot(), path = "Visualizations")
+ 
+```
+
+
