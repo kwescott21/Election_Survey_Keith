@@ -1,9 +1,8 @@
 # Election_Survey_Keith
 
-Author: Keith Wescott
-New York University
-Policy and Data Studio
-July 2021
+### Author: Keith Wescott
+### New York University
+### Policy and Data Studio, 2021
 
 Election Data Analysis to determine if there is an increase in polarization across the years.
 
