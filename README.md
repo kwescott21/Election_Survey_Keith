@@ -13,3 +13,5 @@ https://drive.google.com/drive/folders/1Fkkyi6w9h0ZDo1vcuOaAVi-I-l2QXOYg?usp=sha
 
 Open the fle "Keith_Project_Election.Rmd" and run the file. 
 Warning: The animated visualization may take significant time and computation power. 
+
+Final Medium Blog Post: https://medium.com/@k.wescott.0522/american-polarization-an-analysis-of-election-data-69f218a57d81
